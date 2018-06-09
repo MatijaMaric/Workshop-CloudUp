@@ -2,6 +2,7 @@ import * as React from 'react';
 
 interface IGiphyViewerProps {
     gifSource: string;
+    onSave();
 }
 
 interface IGiphyViewerState {
@@ -14,6 +15,7 @@ export class GiphyViewer extends React.Component<IGiphyViewerProps, IGiphyViewer
         return (
             <div>
                 <img src={this.props.gifSource} />
+                <button onClick={this.props.onSave}>Save</button>
             </div>);
     }
 
