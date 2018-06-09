@@ -1,57 +1,62 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { GiphyViewer } from './component';
-import { StudentProps } from '../demo/student';
-import { Lecture } from '../demo/lecture';
+import { getRandomGiphy } from './util/giphy.service';
+import { SearchComponent } from './components/searchComponent';
+import { GiphyViewer } from './components/giphyViewer';
+import { Navigation, NavigationItem } from './components/navigation';
+import { History, HistoryItem } from './components/history';
 
-export interface AppState {
+interface IIndexState {
     gifSource: string;
-    query: string;
+    selectedNavigationItem: string;
+    historyItems: HistoryItem[];
 }
 
-class Index extends React.Component<{}, AppState> {
+class Index extends React.Component<{}, IIndexState> {
 
-    constructor(props: {}) {
-        super(props);
+    constructor() {
+        super({});
         this.state = {
             gifSource: '',
-            query: ''
+            selectedNavigationItem: 'search',
+            historyItems: []
         };
     }
 
-    public componentDidMount() {
-        this.searchGiphy();
-    }
-
-    private sanitizeInput(query: string): string {
-        return encodeURIComponent(query);
-    }
-
-    private searchGiphy(query?: string) {
-        let httpQuery = 'api_key=dc6zaTOxFJmzC';
-        if (query) {
-            httpQuery += '&tag=' + "cat";
-        }
-
-        fetch(`http://api.giphy.com/v1/gifs/random?${httpQuery}`)
-            .then(response => {
-                return response.json();
-            })
-            .then(giphy => {
-                this.setState({
-                    gifSource: giphy.data.images.original.url
-                });
+    private searchGiphy = (query?: string) => {
+        getRandomGiphy(query).then(gifSource => {
+            this.setState({
+                gifSource: gifSource
             });
+        });
     }
 
-    private onSubmit = (e: any) => {
-        this.searchGiphy(this.state.query);
-        e.preventDefault();
-    }
+    private navigationItems: NavigationItem[] = [
+        {
+            name: 'Search',
+            id: 'search'
+        },
+        {
+            name: 'History',
+            id: 'history'
+        }
+    ]
 
-    private onQueryChanged = (event: React.FormEvent<HTMLInputElement>) => {
+    private _onNavigationItemSelected = (selectedId: string) => {
         this.setState({
-            query: event.currentTarget.value
+            selectedNavigationItem: selectedId
+        });
+    }
+
+    private _onSave = () => {
+        const historyItem: HistoryItem = {
+            url: this.state.gifSource
+        };
+
+        const items = [...this.state.historyItems, historyItem];
+
+        this.setState({
+            historyItems: items
         });
     }
 
@@ -64,24 +69,28 @@ class Index extends React.Component<{}, AppState> {
                     alignItems: 'center'
                 }}
             >
-                <GiphyViewer
-                    source={this.state.gifSource}
+                <Navigation
+                    navigationItems={this.navigationItems}
+                    selectedId={this.state.selectedNavigationItem}
+                    onSelectedChanged={this._onNavigationItemSelected}
                 />
 
-                {'Just some randoooom giphy'}
-                <form
-                    onSubmit={this.onSubmit}
-                >
-                    <input
-                        type="text"
-                        value={this.state.query}
-                        onChange={this.onQueryChanged}
-                        placeholder="Enter Your Interest!"
-                        style={{
-                            margin: '10px'
-                        }}
-                    />
-                </form>
+                {this.state.selectedNavigationItem === 'search' &&
+                    <>
+                        <SearchComponent onSearch={this.searchGiphy} />
+                        <GiphyViewer
+                            gifSource={this.state.gifSource}
+                            onSave={this._onSave}
+                        />
+                    </>
+                }
+                {this.state.selectedNavigationItem === 'history' &&
+                    <>
+                        <History
+                            historyItems={this.state.historyItems}
+                        />
+                    </>
+                }
             </div>
         );
     }
