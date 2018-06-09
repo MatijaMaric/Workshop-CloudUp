@@ -4,7 +4,7 @@ export function getRandomGiphy(query?: string) {
         httpQuery += '&tag=' + query;
     }
 
-    return fetch(`http://api.giphy.com/v1/gifs/random?${httpQuery}`)
+    return fetch(`https://api.giphy.com/v1/gifs/random?${httpQuery}`)
         .then(response => {
             return response.json();
         })
